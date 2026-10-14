@@ -1,5 +1,10 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router'
+import { CarsProvider } from '../../utils/CarsContext'
 
 export default function RootLayout() {
-  return <Stack />;
+  return (
+    <CarsProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </CarsProvider>
+  )
 }

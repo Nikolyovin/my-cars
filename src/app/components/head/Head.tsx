@@ -1,50 +1,62 @@
-import { Image } from 'expo-image'
-import { useState } from 'react'
-import { StyleSheet, Switch, Text, View } from 'react-native'
-
-const cars = [
-  {
-    id: 1,
-    name: 'красная',
-    image: require('@/assets/images/red.jpg'),
-  },
-  {
-    id: 2,
-    name: 'черная',
-    image: require('@/assets/images/black.jpg'),
-  },
-]
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { useCars } from '../../../../utils/CarsContext'
 
 export default function Head() {
-  const [activeId, setActiveId] = useState(1)
-  const car = cars.find((c) => c.id === activeId)
+  const { cars, activeCarId, setActiveCarId, activeCar, loadFromFile } =
+    useCars()
+
+  if (!activeCar) {
+    return (
+      <View style={styles.head}>
+        <Text style={styles.empty}>Нет данных о машинах</Text>
+        <Pressable style={styles.loadButton} onPress={loadFromFile}>
+          <Text style={styles.loadButtonText}>Загрузить Excel-файл</Text>
+        </Pressable>
+      </View>
+    )
+  }
 
   return (
     <View style={styles.head}>
-      {/* Верхняя часть: инфо + картинка */}
       <View style={styles.headTop}>
-        <View style={styles.headInformation}>
-          <Text style={styles.headInformationText}>
-            {activeId == 1 ? 'XTA210930Y2696785' : 'XTA210930Y2623347'}
-          </Text>
-        </View>
+        <Text style={styles.carName}>
+          {activeCar.name} {activeCar.year}
+        </Text>
 
-        <View style={styles.headImgWrapper}>
-          <Image source={car.image} style={styles.image} contentFit='cover' />
+        <View style={styles.plate}>
+          <Text style={styles.plateText}>{activeCar.plate}</Text>
         </View>
       </View>
 
-      {/* Нижняя часть: свитч по центру */}
-      <View style={styles.switchRow}>
-        {/* <Text style={styles.switchLabel}>{car.name}</Text> */}
-        <Switch
-          value={activeId === 2}
-          onValueChange={(isSecond) => setActiveId(isSecond ? 2 : 1)}
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={activeId === 2 ? '#f5dd4b' : '#f4f3f4'}
-          ios_backgroundColor='#3e3e3e'
-        />
+      <Text style={styles.carVin}>{activeCar.vin}</Text>
+
+      <View style={styles.tabs}>
+        {cars.map((c) => {
+          const isActive = c.id === activeCarId
+          return (
+            <Pressable
+              key={c.id}
+              onPress={() => setActiveCarId(c.id)}
+              style={({ pressed }) => [
+                styles.tab,
+                isActive && styles.tabActive,
+                pressed && styles.tabPressed,
+              ]}
+            >
+              <Text
+                style={[styles.tabText, isActive && styles.tabTextActive]}
+                numberOfLines={1}
+              >
+                {c.name}
+              </Text>
+            </Pressable>
+          )
+        })}
       </View>
+
+      <Pressable style={styles.reloadButton} onPress={loadFromFile}>
+        <Text style={styles.reloadButtonText}>Обновить файл</Text>
+      </Pressable>
     </View>
   )
 }
@@ -56,38 +68,95 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     alignSelf: 'center',
-    gap: 16, // отступ между верхом и свитчем
+    gap: 12,
   },
   headTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
-  headInformation: {
+  carName: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
     flexShrink: 1,
   },
-  headInformationText: {
-    color: '#fff',
-    fontWeight: 'bold',
+  carVin: {
+    color: '#9a9a9a',
+    fontSize: 13,
+    letterSpacing: 0.5,
   },
-  headImgWrapper: {
-    width: 150,
-    height: 100,
-    borderRadius: 12,
-    overflow: 'hidden',
+  plate: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 2,
+    borderColor: '#000',
   },
-  image: {
-    width: '100%',
-    height: '100%',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center', // ← центрируем по горизонтали
-    gap: 10,
-  },
-  switchLabel: {
-    color: '#fff',
+  plateText: {
+    color: '#000',
     fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1,
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    backgroundColor: '#2a2a2a',
+    borderWidth: 1,
+    borderColor: '#3f3f3f',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabActive: {
+    backgroundColor: '#e63946',
+    borderColor: '#e63946',
+  },
+  tabPressed: {
+    opacity: 0.75,
+  },
+  tabText: {
+    color: '#bfbfbf',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  tabTextActive: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  empty: {
+    color: '#9a9a9a',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  loadButton: {
+    backgroundColor: '#e63946',
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  loadButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  reloadButton: {
+    marginTop: 4,
+    alignSelf: 'flex-end',
+  },
+  reloadButtonText: {
+    color: '#9a9a9a',
+    fontSize: 12,
+    textDecorationLine: 'underline',
   },
 })
