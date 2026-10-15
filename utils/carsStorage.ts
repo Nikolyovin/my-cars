@@ -2,7 +2,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import { File, Paths } from 'expo-file-system'
 import * as XLSX from 'xlsx'
 
-export type Record = {
+export type ServiceRecord = {
   id: string
   year: string
   mileage: string
@@ -15,7 +15,7 @@ export type Car = {
   year: string
   vin: string
   plate: string
-  records: Record[]
+  records: ServiceRecord[]
 }
 
 // Файл-хранилище в documentDirectory
@@ -48,7 +48,7 @@ function parseSheet(sheetName: string, sheet: XLSX.WorkSheet): Car {
     }
   }
 
-  const records: Record[] = rows
+  const records: ServiceRecord[] = rows
     .slice(tableStartIndex)
     .filter((row) => row.length >= 3 && row[0])
     .map((row, i) => ({
