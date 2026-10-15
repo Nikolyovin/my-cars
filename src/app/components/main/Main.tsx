@@ -79,8 +79,15 @@ export default function Main() {
                 onPress={() => copyPart(item.id, item.part)}
                 style={styles.partCell}
               >
-                <Text style={[styles.cell, styles.colPart]}>{item.part}</Text>
-                {isCopied && <Text style={styles.copiedHint}>Скопировано</Text>}
+                <Text
+  style={[
+    styles.cell,
+    styles.colPart,
+    isCopied && styles.copiedText,
+  ]}
+>
+  {item.part}
+</Text>
               </Pressable>
             </View>
           )
@@ -177,4 +184,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
   },
+  copiedText: {
+  color: '#22c55e',
+},
 })

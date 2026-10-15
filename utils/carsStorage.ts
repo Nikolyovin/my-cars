@@ -80,7 +80,8 @@ export function parseWorkbook(base64: string): Car[] {
 export function getStorageModifiedTime(): number | null {
   try {
     if (!STORAGE_FILE.exists) return null
-    return STORAGE_FILE.modificationTime ?? null
+    // modificationTime устарел, используем lastModified
+    return STORAGE_FILE.lastModified ?? null
   } catch {
     return null
   }
