@@ -1,10 +1,30 @@
-import { FlatList, StyleSheet, Text, View } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
+import { useEffect, useRef, useState } from 'react'
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useCars } from '../../../../utils/CarsContext'
 
 export default function Main() {
   const { activeCar } = useCars()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Очищаем таймер при размонтировании компонента
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
 
   if (!activeCar) return null
+
+  const copyPart = async (id: string, text: string) => {
+    await Clipboard.setStringAsync(text)
+    setCopiedId(id)
+
+    // Сбрасываем предыдущий таймер, если он ещё не сработал
+    if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    timeoutRef.current = setTimeout(() => setCopiedId(null), 1500)
+  }
 
   return (
     <View style={styles.main}>
@@ -23,15 +43,25 @@ export default function Main() {
       <FlatList
         data={activeCar.records}
         keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View style={[styles.row, index % 2 === 0 && styles.rowEven]}>
-            <Text style={[styles.cell, styles.colYear]}>{item.year}</Text>
-            <Text style={[styles.cell, styles.colMileage]}>
-              {Number(item.mileage).toLocaleString('ru-RU')}
-            </Text>
-            <Text style={[styles.cell, styles.colPart]}>{item.part}</Text>
-          </View>
-        )}
+        renderItem={({ item, index }) => {
+          const isCopied = copiedId === item.id
+          return (
+            <View style={[styles.row, index % 2 === 0 && styles.rowEven]}>
+              <Text style={[styles.cell, styles.colYear]}>{item.year}</Text>
+              <Text style={[styles.cell, styles.colMileage]}>
+                {Number(item.mileage).toLocaleString('ru-RU')}
+              </Text>
+
+              <Pressable
+                onPress={() => copyPart(item.id, item.part)}
+                style={styles.partCell}
+              >
+                <Text style={[styles.cell, styles.colPart]}>{item.part}</Text>
+                {isCopied && <Text style={styles.copiedHint}>Скопировано</Text>}
+              </Pressable>
+            </View>
+          )
+        }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
@@ -87,5 +117,22 @@ const styles = StyleSheet.create({
   colYear: { width: 60 },
   colMileage: { width: 110 },
   colPart: { flex: 1 },
+
+  partCell: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  copiedHint: {
+    color: '#22c55e',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginLeft: 8,
+  },
+
   listContent: { paddingBottom: 8 },
 })
