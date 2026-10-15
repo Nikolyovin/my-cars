@@ -1,9 +1,12 @@
+import * as Clipboard from 'expo-clipboard'
+import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { useCars } from '../../../../utils/CarsContext'
+import { useCars } from '../../../utils/CarsContext'
 
 export default function Head() {
   const { cars, activeCarId, setActiveCarId, activeCar, loadFromFile } =
     useCars()
+  const [copied, setCopied] = useState(false)
 
   if (!activeCar) {
     return (
@@ -14,6 +17,12 @@ export default function Head() {
         </Pressable>
       </View>
     )
+  }
+
+  const copyVin = async () => {
+    await Clipboard.setStringAsync(activeCar.vin)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
   }
 
   return (
@@ -28,7 +37,13 @@ export default function Head() {
         </View>
       </View>
 
-      <Text style={styles.carVin}>{activeCar.vin}</Text>
+      {/* VIN — тапаем, чтобы скопировать */}
+      <Pressable onPress={copyVin} style={styles.vinRow}>
+        <Text style={styles.carVin}>{activeCar.vin}</Text>
+        <Text style={[styles.copyHint, copied && styles.copyHintActive]}>
+          {copied ? 'Скопировано' : 'Копировать'}
+        </Text>
+      </Pressable>
 
       <View style={styles.tabs}>
         {cars.map((c) => {
@@ -82,11 +97,35 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     flexShrink: 1,
   },
+
+  // VIN + подсказка
+  vinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: '#2a2a2a',
+  },
   carVin: {
     color: '#9a9a9a',
     fontSize: 13,
     letterSpacing: 0.5,
+    flexShrink: 1,
   },
+  copyHint: {
+    color: '#6a6a6a',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginLeft: 8,
+  },
+  copyHintActive: {
+    color: '#22c55e', // зелёный при успехе
+  },
+
   plate: {
     backgroundColor: '#fff',
     borderRadius: 6,
