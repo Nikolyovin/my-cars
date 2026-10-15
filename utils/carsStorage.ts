@@ -72,8 +72,18 @@ function parseSheet(sheetName: string, sheet: XLSX.WorkSheet): Car {
 export function parseWorkbook(base64: string): Car[] {
   const workbook = XLSX.read(base64, { type: 'base64' })
   return workbook.SheetNames.map((name) =>
-    parseSheet(name, workbook.Sheets[name])
+    parseSheet(name, workbook.Sheets[name]),
   )
+}
+
+// Возвращает время последнего изменения файла в мс, или null
+export function getStorageModifiedTime(): number | null {
+  try {
+    if (!STORAGE_FILE.exists) return null
+    return STORAGE_FILE.modificationTime ?? null
+  } catch {
+    return null
+  }
 }
 
 // Проверяем, есть ли сохранённый файл, и читаем его
@@ -91,23 +101,28 @@ export async function loadSavedCars(): Promise<Car[] | null> {
 
 // Выбор файла пользователем и сохранение в documentDirectory
 export async function pickAndSaveCars(): Promise<Car[] | null> {
-  const result = await DocumentPicker.getDocumentAsync({
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    copyToCacheDirectory: true,
-  })
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      copyToCacheDirectory: true,
+    })
 
-  if (result.canceled) return null
+    if (result.canceled) return null
 
-  // Оборачиваем выбранный файл в File
-  const pickedFile = new File(result.assets[0].uri)
+    // Оборачиваем выбранный файл в File
+    const pickedFile = new File(result.assets[0].uri)
 
-  // Копируем в documentDirectory (перезаписываем, если уже есть)
-  if (STORAGE_FILE.exists) {
-    STORAGE_FILE.delete()
+    // Копируем в documentDirectory (перезаписываем, если уже есть)
+    if (STORAGE_FILE.exists) {
+      STORAGE_FILE.delete()
+    }
+    pickedFile.copy(STORAGE_FILE)
+
+    // Читаем как base64 и парсим
+    const base64 = await STORAGE_FILE.base64()
+    return parseWorkbook(base64)
+  } catch (e) {
+    console.warn('Не удалось загрузить файл', e)
+    return null
   }
-  pickedFile.copy(STORAGE_FILE)
-
-  // Читаем как base64 и парсим
-  const base64 = await STORAGE_FILE.base64()
-  return parseWorkbook(base64)
 }

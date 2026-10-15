@@ -1,14 +1,17 @@
 import * as Clipboard from 'expo-clipboard'
+import * as Haptics from 'expo-haptics'
 import { useEffect, useRef, useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useCars } from '../../../../utils/CarsContext'
 
+type SortOrder = 'desc' | 'asc'
+
 export default function Main() {
   const { activeCar } = useCars()
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Очищаем таймер при размонтировании компонента
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
@@ -17,11 +20,22 @@ export default function Main() {
 
   if (!activeCar) return null
 
+  // Сортируем копию массива, чтобы не мутировать исходные данные
+  const sortedRecords = [...activeCar.records].sort((a, b) => {
+    const diff = Number(b.year) - Number(a.year)
+    return sortOrder === 'desc' ? diff : -diff
+  })
+
+  const toggleSort = async () => {
+    await Haptics.selectionAsync()
+    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
+  }
+
   const copyPart = async (id: string, text: string) => {
     await Clipboard.setStringAsync(text)
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setCopiedId(id)
 
-    // Сбрасываем предыдущий таймер, если он ещё не сработал
     if (timeoutRef.current) clearTimeout(timeoutRef.current)
     timeoutRef.current = setTimeout(() => setCopiedId(null), 1500)
   }
@@ -29,9 +43,11 @@ export default function Main() {
   return (
     <View style={styles.main}>
       <View style={styles.rowHeader}>
-        <Text style={[styles.cell, styles.colYear, styles.headerText]}>
-          Год
-        </Text>
+        <Pressable onPress={toggleSort} style={styles.colYear}>
+          <Text style={[styles.headerText, styles.sortableHeader]}>
+            Год {sortOrder === 'desc' ? '▼' : '▲'}
+          </Text>
+        </Pressable>
         <Text style={[styles.cell, styles.colMileage, styles.headerText]}>
           Пробег
         </Text>
@@ -41,8 +57,16 @@ export default function Main() {
       </View>
 
       <FlatList
-        data={activeCar.records}
+        data={sortedRecords}
         keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Записей пока нет</Text>
+            <Text style={styles.emptySubtitle}>
+              Добавьте данные в Excel-файл и обновите его
+            </Text>
+          </View>
+        }
         renderItem={({ item, index }) => {
           const isCopied = copiedId === item.id
           return (
@@ -51,7 +75,6 @@ export default function Main() {
               <Text style={[styles.cell, styles.colMileage]}>
                 {Number(item.mileage).toLocaleString('ru-RU')}
               </Text>
-
               <Pressable
                 onPress={() => copyPart(item.id, item.part)}
                 style={styles.partCell}
@@ -135,4 +158,23 @@ const styles = StyleSheet.create({
   },
 
   listContent: { paddingBottom: 8 },
+  sortableHeader: {
+    textDecorationLine: 'underline',
+  },
+  emptyState: {
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyTitle: {
+    color: '#bfbfbf',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  emptySubtitle: {
+    color: '#6a6a6a',
+    fontSize: 12,
+    textAlign: 'center',
+  },
 })

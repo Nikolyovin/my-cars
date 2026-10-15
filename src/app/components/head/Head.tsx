@@ -1,12 +1,36 @@
 import * as Clipboard from 'expo-clipboard'
+import * as Haptics from 'expo-haptics'
 import { useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { useCars } from '../../../utils/CarsContext'
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native'
+import { useCars } from '../../../../utils/CarsContext'
 
 export default function Head() {
-  const { cars, activeCarId, setActiveCarId, activeCar, loadFromFile } =
-    useCars()
+  const {
+    cars,
+    activeCarId,
+    setActiveCarId,
+    activeCar,
+    loadFromFile,
+    loading,
+    lastUpdated,
+  } = useCars()
   const [copied, setCopied] = useState(false)
+
+  // Пока идёт загрузка — показываем оверлей
+  if (loading) {
+    return (
+      <View style={[styles.head, styles.headLoading]}>
+        <ActivityIndicator size='large' color='#e63946' />
+        <Text style={styles.loadingText}>Загрузка данных...</Text>
+      </View>
+    )
+  }
 
   if (!activeCar) {
     return (
@@ -21,6 +45,7 @@ export default function Head() {
 
   const copyVin = async () => {
     await Clipboard.setStringAsync(activeCar.vin)
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -31,19 +56,24 @@ export default function Head() {
         <Text style={styles.carName}>
           {activeCar.name} {activeCar.year}
         </Text>
-
         <View style={styles.plate}>
           <Text style={styles.plateText}>{activeCar.plate}</Text>
         </View>
       </View>
 
-      {/* VIN — тапаем, чтобы скопировать */}
       <Pressable onPress={copyVin} style={styles.vinRow}>
         <Text style={styles.carVin}>{activeCar.vin}</Text>
         <Text style={[styles.copyHint, copied && styles.copyHintActive]}>
           {copied ? 'Скопировано' : 'Копировать'}
         </Text>
       </Pressable>
+
+      {/* Дата последнего обновления */}
+      {lastUpdated && (
+        <Text style={styles.updatedText}>
+          Обновлено: {new Date(lastUpdated).toLocaleDateString('ru-RU')}
+        </Text>
+      )}
 
       <View style={styles.tabs}>
         {cars.map((c) => {
@@ -197,5 +227,20 @@ const styles = StyleSheet.create({
     color: '#9a9a9a',
     fontSize: 12,
     textDecorationLine: 'underline',
+  },
+  headLoading: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
+  },
+  loadingText: {
+    color: '#9a9a9a',
+    fontSize: 13,
+  },
+  updatedText: {
+    color: '#6a6a6a',
+    fontSize: 11,
+    marginTop: -4,
   },
 })
