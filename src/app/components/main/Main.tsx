@@ -26,7 +26,9 @@ export default function Main() {
         renderItem={({ item, index }) => (
           <View style={[styles.row, index % 2 === 0 && styles.rowEven]}>
             <Text style={[styles.cell, styles.colYear]}>{item.year}</Text>
-            <Text style={[styles.cell, styles.colMileage]}>{item.mileage}</Text>
+            <Text style={[styles.cell, styles.colMileage]}>
+              {Number(item.mileage).toLocaleString('ru-RU')}
+            </Text>
             <Text style={[styles.cell, styles.colPart]}>{item.part}</Text>
           </View>
         )}
