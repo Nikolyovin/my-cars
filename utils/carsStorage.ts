@@ -110,18 +110,16 @@ export async function pickAndSaveCars(): Promise<Car[] | null> {
 
     if (result.canceled) return null
 
-    // Оборачиваем выбранный файл в File
+    // 1. Сначала читаем выбранный файл из кэша
     const pickedFile = new File(result.assets[0].uri)
+    const base64 = await pickedFile.base64()
+    const cars = parseWorkbook(base64)
 
-    // Копируем в documentDirectory (перезаписываем, если уже есть)
-    if (STORAGE_FILE.exists) {
-      STORAGE_FILE.delete()
-    }
+    // 2. Потом копируем в documentDirectory для сохранения между запусками
+    if (STORAGE_FILE.exists) STORAGE_FILE.delete()
     pickedFile.copy(STORAGE_FILE)
 
-    // Читаем как base64 и парсим
-    const base64 = await STORAGE_FILE.base64()
-    return parseWorkbook(base64)
+    return cars
   } catch (e) {
     console.warn('Не удалось загрузить файл', e)
     return null
