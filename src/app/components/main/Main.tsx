@@ -145,8 +145,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
   },
-  colYear: { width: 60 },
-  colMileage: { width: 110 },
+  colYear: { width: 45 },
+  colMileage: { width: 80 },
   colPart: { flex: 1 },
 
   partCell: {
