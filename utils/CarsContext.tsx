@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 import {
   Car,
   getStorageModifiedTime,
@@ -22,7 +28,6 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
   const [cars, setCars] = useState<Car[]>([])
   const [activeCarId, setActiveCarId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  // Триггер для пересчёта lastUpdated после загрузки
   const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
@@ -42,35 +47,35 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
     if (data && data.length) {
       setCars(data)
       setActiveCarId(data[0].id)
-      setRefreshKey((k) => k + 1) // форсируем пересчёт lastUpdated
+      setRefreshKey((k) => k + 1)
     }
     setLoading(false)
   }
 
-  const activeCar = cars.find((c) => c.id === activeCarId) ?? null
+  const activeCar = useMemo(
+    () => cars.find((c) => c.id === activeCarId) ?? null,
+    [cars, activeCarId],
+  )
 
-  // Читаем время изменения файла при каждом рендере.
-  // refreshKey в зависимостях заставляет пересчитать после загрузки.
-  const lastUpdated = React.useMemo(
+  const lastUpdated = useMemo(
     () => getStorageModifiedTime(),
     [refreshKey, cars.length],
   )
 
-  return (
-    <CarsContext.Provider
-      value={{
-        cars,
-        activeCarId,
-        setActiveCarId,
-        activeCar,
-        loadFromFile,
-        loading,
-        lastUpdated,
-      }}
-    >
-      {children}
-    </CarsContext.Provider>
+  const value = useMemo(
+    () => ({
+      cars,
+      activeCarId,
+      setActiveCarId,
+      activeCar,
+      loadFromFile,
+      loading,
+      lastUpdated,
+    }),
+    [cars, activeCarId, activeCar, loading, lastUpdated, refreshKey],
   )
+
+  return <CarsContext.Provider value={value}>{children}</CarsContext.Provider>
 }
 
 export function useCars() {
