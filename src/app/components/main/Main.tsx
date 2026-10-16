@@ -7,7 +7,7 @@ import { useCars } from '../../../../utils/CarsContext'
 type SortOrder = 'desc' | 'asc'
 
 export default function Main() {
-  const { activeCar } = useCars()
+  const { activeCar, refreshKey } = useCars()
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -57,6 +57,7 @@ export default function Main() {
       </View>
 
       <FlatList
+        key={`${activeCar.id}-${refreshKey}`}
         data={sortedRecords}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
@@ -80,14 +81,14 @@ export default function Main() {
                 style={styles.partCell}
               >
                 <Text
-  style={[
-    styles.cell,
-    styles.colPart,
-    isCopied && styles.copiedText,
-  ]}
->
-  {item.part}
-</Text>
+                  style={[
+                    styles.cell,
+                    styles.colPart,
+                    isCopied && styles.copiedText,
+                  ]}
+                >
+                  {item.part}
+                </Text>
               </Pressable>
             </View>
           )
@@ -185,6 +186,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   copiedText: {
-  color: '#22c55e',
-},
+    color: '#22c55e',
+  },
 })

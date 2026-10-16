@@ -20,6 +20,7 @@ type CarsContextValue = {
   loadFromFile: () => Promise<void>
   loading: boolean
   lastUpdated: number | null
+  refreshKey: number // ← новое
 }
 
 const CarsContext = createContext<CarsContextValue | null>(null)
@@ -71,6 +72,7 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
       loadFromFile,
       loading,
       lastUpdated,
+      refreshKey, // ← новое
     }),
     [cars, activeCarId, activeCar, loading, lastUpdated, refreshKey],
   )
