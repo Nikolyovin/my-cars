@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native'
 import { useCars } from '../../../../utils/CarsContext'
-import { APP_VERSION } from '../../../../utils/version'
 
 export default function Head() {
   const {
@@ -68,8 +67,6 @@ export default function Head() {
           {copied ? 'Скопировано' : 'Копировать'}
         </Text>
       </Pressable>
-      <Text style={styles.versionText}>v{APP_VERSION}</Text>
-
       {/* Дата последнего обновления */}
       {lastUpdated && (
         <Text style={styles.updatedText}>
@@ -244,11 +241,5 @@ const styles = StyleSheet.create({
     color: '#6a6a6a',
     fontSize: 11,
     marginTop: -4,
-  },
-  versionText: {
-    color: '#4a4a4a',
-    fontSize: 10,
-    textAlign: 'center',
-    marginTop: 4,
   },
 })
