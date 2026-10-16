@@ -1,56 +1,106 @@
-# Welcome to your Expo app 👋
+# my-cars
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Мобильное приложение для учёта обслуживания нескольких автомобилей. Данные хранятся в Excel-файле, который загружается прямо в приложении.
 
-## Get started
+## 📱 Что умеет
 
-1. Install dependencies
+- **Несколько машин** — каждая машина на отдельном листе Excel
+- **История обслуживания** — год, пробег, запчасть/работа
+- **Копирование VIN и записей** — тапом по тексту, с haptic-отдачей
+- **Сортировка по году** — тап по заголовку «Год»
+- **Форматирование пробега** — `1 000 000` вместо `1000000`
+- **Сохранение файла** — Excel копируется в память приложения, данные доступны между запусками
+- **Дата обновления** — показывает, когда файл менялся последний раз
+- **Тёмная тема** — в стиле приложения
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 🚀 Запуск
 
 ```bash
-npm run reset-project
+# Установить зависимости
+npm install
+
+# Запустить сервер разработки
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Дальше — отсканировать QR-код через Expo Go на телефоне, или нажать `a` для Android-эмулятора.
 
-### Other setup steps
+## 📊 Формат Excel-файла
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Каждая машина — **отдельный лист**. Название листа = название машины (если в метаданных не указано иное).
 
-## Learn more
+### Структура листа
 
-To learn more about developing your project with Expo, look at the following resources:
+| Строка | Столбец A | Столбец B | Столбец C |
+|---|---|---|---|
+| 1 | `name` | Lada Largus | |
+| 2 | `year` | 2021 | |
+| 3 | `vin` | XTA210930Y2696785 | |
+| 4 | `plate` | А123ВС 77 | |
+| 5 | *(пустая)* | | |
+| 6 | `year` | `mileage` | `part` |
+| 7 | 2026 | 92400 | Замена масла ДВС |
+| 8 | 2025 | 85100 | Ступичный подшипник задний левый |
+| ... | ... | ... | ... |
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Правила
 
-## Join the community
+1. **Первые 3–4 строки** — метаданные машины: `name`, `year`, `vin`, `plate`. Порядок не важен, но каждая строка — это пара `ключ | значение`.
+2. **Пустая строка** — разделитель между метаданными и таблицей.
+3. **Шапка таблицы** — обязательно `year | mileage | part` во второй колонке должно быть `mileage`, иначе парсер не поймёт, что это начало таблицы.
+4. **Записи** — каждая строка: год, пробег, работа. Пустые строки в конце игнорируются.
+5. **Формат файла** — `.xlsx` (не `.xls`, не `.csv`).
+6. **Кириллица** — поддерживается, файл читается как бинарный, кодировка не важна.
 
-Join our community of developers creating universal apps.
+### Пример для нескольких машин
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+В одном файле `cars.xlsx`:
+
+- **Лист 1**: `Lada Largus` — метаданные + таблица
+- **Лист 2**: `Lada Vesta` — метаданные + таблица
+- **Лист 3**: `Lada Niva` — метаданные + таблица
+
+Приложение покажет их как вкладки в шапке, между которыми можно переключаться.
+
+## 🛠️ Стек
+
+- **Expo SDK 54** — фреймворк
+- **Expo Router** — навигация
+- **TypeScript** — типизация
+- **`expo-file-system`** (новый API) — работа с файлами
+- **`expo-document-picker`** — выбор Excel-файла
+- **`xlsx`** — парсинг Excel
+- **`expo-clipboard`** — копирование текста
+- **`expo-haptics`** — тактильный отклик
+
+## 📁 Структура
+
+```
+src/app/
+  index.tsx              — главный экран
+  _layout.tsx            — корневой макет
+  components/
+    head/Head.tsx        — шапка с инфо о машине и табами
+    main/Main.tsx        — таблица обслуживания
+utils/
+  CarsContext.tsx        — контекст с данными машин
+  carsStorage.ts         — парсинг и хранение Excel
+assets/
+  images/
+    icon.png             — иконка приложения
+    splash-icon.png      — иконка на splash-экране
+```
+
+## 📦 Сборка APK
+
+Через EAS Build:
+
+```bash
+eas build -p android --profile preview
+```
+
+Профиль `preview` в `eas.json` должен содержать `"buildType": "apk"`, чтобы получить установочный файл, а не AAB.
+
+## 📝 Лицензия
+
+Личный проект.
