@@ -17,7 +17,7 @@ export default function Main() {
   const { activeCar, refreshKey } = useCars()
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
-  const [searchQuery, setSearchQuery] = useState('') // ← новое
+  const [searchQuery, setSearchQuery] = useState('')
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -33,15 +33,45 @@ export default function Main() {
 
   if (!activeCar) return null
 
-  // 1. Фильтруем по запросу
+  // Функция для безопасного получения числа пробега
+  const getMileageNum = (value: string | number) => {
+    const num = Number(String(value).replace(/\s/g, ''))
+    return isNaN(num) ? -1 : num
+  }
+
+  // Функция для красивого вывода (если -1, значит данные битые)
+  const formatMileage = (value: string | number) => {
+    const num = getMileageNum(value)
+    if (num === -1) return '...'
+    return num.toLocaleString('ru-RU')
+  }
+
+  // Фильтруем
   const filteredRecords = activeCar.records.filter((item) =>
     item.part.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  // 2. Сортируем отфильтрованные записи
+  // Сортируем: сначала по году, потом по пробегу (невалидные в самый низ)
   const sortedRecords = [...filteredRecords].sort((a, b) => {
-    const diff = Number(b.year) - Number(a.year)
-    return sortOrder === 'desc' ? diff : -diff
+    const yearA = Number(a.year)
+    const yearB = Number(b.year)
+
+    // 1. Сначала сравниваем года
+    if (yearA !== yearB) {
+      return sortOrder === 'desc' ? yearB - yearA : yearA - yearB
+    }
+
+    // 2. Если года одинаковые — сравниваем пробеги
+    const mA = getMileageNum(a.mileage)
+    const mB = getMileageNum(b.mileage)
+
+    // Если один из них невалидный (-1), отправляем его в конец
+    if (mA === -1 && mB !== -1) return 1
+    if (mB === -1 && mA !== -1) return -1
+    if (mA === -1 && mB === -1) return 0
+
+    // Если оба нормальные — сортируем по убыванию/возрастанию
+    return sortOrder === 'desc' ? mB - mA : mA - mB
   })
 
   const toggleSort = async () => {
@@ -69,7 +99,7 @@ export default function Main() {
           value={searchQuery}
           onChangeText={setSearchQuery}
           autoCorrect={false}
-          clearButtonMode='while-editing' // для iOS
+          clearButtonMode='while-editing'
         />
       </View>
 
@@ -88,7 +118,7 @@ export default function Main() {
       </View>
 
       <FlatList
-        key={`${activeCar.id}-${refreshKey}-${searchQuery}`} // поиск тоже влияет на пересоздание
+        key={`${activeCar.id}-${refreshKey}-${searchQuery}`}
         data={sortedRecords}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
@@ -109,7 +139,7 @@ export default function Main() {
             <View style={[styles.row, index % 2 === 0 && styles.rowEven]}>
               <Text style={[styles.cell, styles.colYear]}>{item.year}</Text>
               <Text style={[styles.cell, styles.colMileage]}>
-                {Number(item.mileage).toLocaleString('ru-RU')}
+                {formatMileage(item.mileage)}
               </Text>
               <Pressable
                 onPress={() => copyPart(item.id, item.part)}
@@ -131,7 +161,7 @@ export default function Main() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps='handled' // чтобы тап по элементу списка работал при открытой клавиатуре
+        keyboardShouldPersistTaps='handled'
       />
     </View>
   )
@@ -148,8 +178,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
     flex: 1,
   },
-
-  // Поиск
   searchContainer: {
     paddingHorizontal: 16,
     paddingBottom: 12,
@@ -164,7 +192,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3f3f3f',
   },
-
   rowHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
@@ -201,7 +228,6 @@ const styles = StyleSheet.create({
   colYear: { width: 60 },
   colMileage: { width: 110 },
   colPart: { flex: 1 },
-
   partCell: {
     flex: 1,
     flexDirection: 'row',
@@ -217,7 +243,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginLeft: 8,
   },
-
   listContent: { paddingBottom: 8 },
   sortableHeader: {
     textDecorationLine: 'underline',
