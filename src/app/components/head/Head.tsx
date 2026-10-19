@@ -22,7 +22,6 @@ export default function Head() {
   } = useCars()
   const [copied, setCopied] = useState(false)
 
-  // Пока идёт загрузка — показываем оверлей
   if (loading) {
     return (
       <View style={[styles.head, styles.headLoading]}>
@@ -67,12 +66,6 @@ export default function Head() {
           {copied ? 'Скопировано' : 'Копировать'}
         </Text>
       </Pressable>
-      {/* Дата последнего обновления */}
-      {lastUpdated && (
-        <Text style={styles.updatedText}>
-          Обновлено: {new Date(lastUpdated).toLocaleDateString('ru-RU')}
-        </Text>
-      )}
 
       <View style={styles.tabs}>
         {cars.map((c) => {
@@ -98,9 +91,18 @@ export default function Head() {
         })}
       </View>
 
-      <Pressable style={styles.reloadButton} onPress={loadFromFile}>
-        <Text style={styles.reloadButtonText}>Обновить файл</Text>
-      </Pressable>
+      {/* Нижняя часть: кнопка обновления и дата */}
+      <View style={styles.footer}>
+        <Pressable style={styles.reloadButton} onPress={loadFromFile}>
+          <Text style={styles.reloadButtonText}>Обновить файл</Text>
+        </Pressable>
+
+        {lastUpdated && (
+          <Text style={styles.updatedText}>
+            {new Date(lastUpdated).toLocaleDateString('ru-RU')}
+          </Text>
+        )}
+      </View>
     </View>
   )
 }
@@ -109,20 +111,20 @@ const styles = StyleSheet.create({
   head: {
     backgroundColor: '#373737',
     width: '95%',
-    padding: 20,
+    padding: 14, // уменьшено с 20
     borderRadius: 16,
     alignSelf: 'center',
-    gap: 12,
+    gap: 8, // уменьшено с 12
   },
   headTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 8, // уменьшено с 12
   },
   carName: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17, // чуть уменьшено с 18
     fontWeight: '700',
     flexShrink: 1,
   },
@@ -132,7 +134,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 4, // уменьшено с 6
     paddingHorizontal: 8,
     borderRadius: 8,
     backgroundColor: '#2a2a2a',
@@ -152,33 +154,35 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   copyHintActive: {
-    color: '#22c55e', // зелёный при успехе
+    color: '#22c55e',
   },
 
   plate: {
     backgroundColor: '#fff',
     borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8, // уменьшено с 10
+    paddingVertical: 3, // уменьшено с 4
     borderWidth: 2,
     borderColor: '#000',
   },
   plateText: {
     color: '#000',
-    fontSize: 14,
+    fontSize: 13, // уменьшено с 14
     fontWeight: '700',
     letterSpacing: 1,
   },
+
+  // Табы
   tabs: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 4,
+    gap: 6, // уменьшено с 8
+    marginTop: 2, // уменьшено с 4
   },
   tab: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    paddingVertical: 8, // уменьшено с 10
+    paddingHorizontal: 6,
+    borderRadius: 8,
     backgroundColor: '#2a2a2a',
     borderWidth: 1,
     borderColor: '#3f3f3f',
@@ -194,13 +198,35 @@ const styles = StyleSheet.create({
   },
   tabText: {
     color: '#bfbfbf',
-    fontSize: 13,
+    fontSize: 12, // уменьшено с 13
     fontWeight: '500',
   },
   tabTextActive: {
     color: '#fff',
     fontWeight: '700',
   },
+
+  // Футер с кнопкой и датой
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // кнопка слева, дата справа
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  reloadButton: {
+    // убрали alignSelf: 'flex-end', теперь работает через footer
+  },
+  reloadButtonText: {
+    color: '#9a9a9a',
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  updatedText: {
+    color: '#6a6a6a',
+    fontSize: 11,
+  },
+
+  // Остальное без изменений
   empty: {
     color: '#9a9a9a',
     fontSize: 14,
@@ -218,15 +244,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 14,
   },
-  reloadButton: {
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  reloadButtonText: {
-    color: '#9a9a9a',
-    fontSize: 12,
-    textDecorationLine: 'underline',
-  },
   headLoading: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -236,10 +253,5 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#9a9a9a',
     fontSize: 13,
-  },
-  updatedText: {
-    color: '#6a6a6a',
-    fontSize: 11,
-    marginTop: -4,
   },
 })
