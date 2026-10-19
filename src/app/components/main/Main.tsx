@@ -1,7 +1,14 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { useEffect, useRef, useState } from 'react'
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
+import {
+  FlatList,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { useCars } from '../../../../utils/CarsContext'
 
 type SortOrder = 'desc' | 'asc'
@@ -10,6 +17,7 @@ export default function Main() {
   const { activeCar, refreshKey } = useCars()
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
+  const [searchQuery, setSearchQuery] = useState('') // ← новое
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -18,10 +26,20 @@ export default function Main() {
     }
   }, [])
 
+  // При смене машины сбрасываем поиск
+  useEffect(() => {
+    setSearchQuery('')
+  }, [activeCar?.id])
+
   if (!activeCar) return null
 
-  // Сортируем копию массива, чтобы не мутировать исходные данные
-  const sortedRecords = [...activeCar.records].sort((a, b) => {
+  // 1. Фильтруем по запросу
+  const filteredRecords = activeCar.records.filter((item) =>
+    item.part.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  // 2. Сортируем отфильтрованные записи
+  const sortedRecords = [...filteredRecords].sort((a, b) => {
     const diff = Number(b.year) - Number(a.year)
     return sortOrder === 'desc' ? diff : -diff
   })
@@ -42,6 +60,19 @@ export default function Main() {
 
   return (
     <View style={styles.main}>
+      {/* Поле поиска */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder='Поиск по запчастям...'
+          placeholderTextColor='#6a6a6a'
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          autoCorrect={false}
+          clearButtonMode='while-editing' // для iOS
+        />
+      </View>
+
       <View style={styles.rowHeader}>
         <Pressable onPress={toggleSort} style={styles.colYear}>
           <Text style={[styles.headerText, styles.sortableHeader]}>
@@ -57,14 +88,18 @@ export default function Main() {
       </View>
 
       <FlatList
-        key={`${activeCar.id}-${refreshKey}`}
+        key={`${activeCar.id}-${refreshKey}-${searchQuery}`} // поиск тоже влияет на пересоздание
         data={sortedRecords}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Записей пока нет</Text>
+            <Text style={styles.emptyTitle}>
+              {searchQuery ? 'Ничего не найдено' : 'Записей пока нет'}
+            </Text>
             <Text style={styles.emptySubtitle}>
-              Добавьте данные в Excel-файл и обновите его
+              {searchQuery
+                ? 'Попробуйте изменить запрос'
+                : 'Добавьте данные в Excel-файл и обновите его'}
             </Text>
           </View>
         }
@@ -96,6 +131,7 @@ export default function Main() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps='handled' // чтобы тап по элементу списка работал при открытой клавиатуре
       />
     </View>
   )
@@ -112,6 +148,23 @@ const styles = StyleSheet.create({
     marginTop: 15,
     flex: 1,
   },
+
+  // Поиск
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  searchInput: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    color: '#fff',
+    fontSize: 14,
+    borderWidth: 1,
+    borderColor: '#3f3f3f',
+  },
+
   rowHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
@@ -145,8 +198,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
   },
-  colYear: { width: 45 },
-  colMileage: { width: 80 },
+  colYear: { width: 60 },
+  colMileage: { width: 110 },
   colPart: { flex: 1 },
 
   partCell: {
