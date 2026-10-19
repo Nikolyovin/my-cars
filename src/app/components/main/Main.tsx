@@ -33,44 +33,36 @@ export default function Main() {
 
   if (!activeCar) return null
 
-  // Функция для безопасного получения числа пробега
   const getMileageNum = (value: string | number) => {
     const num = Number(String(value).replace(/\s/g, ''))
     return isNaN(num) ? -1 : num
   }
 
-  // Функция для красивого вывода (если -1, значит данные битые)
   const formatMileage = (value: string | number) => {
     const num = getMileageNum(value)
     if (num === -1) return '...'
     return num.toLocaleString('ru-RU')
   }
 
-  // Фильтруем
   const filteredRecords = activeCar.records.filter((item) =>
     item.part.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  // Сортируем: сначала по году, потом по пробегу (невалидные в самый низ)
   const sortedRecords = [...filteredRecords].sort((a, b) => {
     const yearA = Number(a.year)
     const yearB = Number(b.year)
 
-    // 1. Сначала сравниваем года
     if (yearA !== yearB) {
       return sortOrder === 'desc' ? yearB - yearA : yearA - yearB
     }
 
-    // 2. Если года одинаковые — сравниваем пробеги
     const mA = getMileageNum(a.mileage)
     const mB = getMileageNum(b.mileage)
 
-    // Если один из них невалидный (-1), отправляем его в конец
     if (mA === -1 && mB !== -1) return 1
     if (mB === -1 && mA !== -1) return -1
     if (mA === -1 && mB === -1) return 0
 
-    // Если оба нормальные — сортируем по убыванию/возрастанию
     return sortOrder === 'desc' ? mB - mA : mA - mB
   })
 
@@ -90,17 +82,29 @@ export default function Main() {
 
   return (
     <View style={styles.main}>
-      {/* Поле поиска */}
+      {/* Поле поиска с кнопкой сброса */}
       <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder='Поиск по запчастям...'
-          placeholderTextColor='#6a6a6a'
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCorrect={false}
-          clearButtonMode='while-editing'
-        />
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder='Поиск по запчастям...'
+            placeholderTextColor='#6a6a6a'
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoCorrect={false}
+            // clearButtonMode='while-editing' // работает на iOS
+          />
+          {/* Кнопка сброса для Android */}
+          {searchQuery.length > 0 && (
+            <Pressable
+              onPress={() => setSearchQuery('')}
+              style={styles.clearButton}
+              hitSlop={8} // увеличиваем область нажатия для удобства
+            >
+              <Text style={styles.clearButtonText}>✕</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
 
       <View style={styles.rowHeader}>
@@ -182,15 +186,34 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
   },
+  // Новый контейнер для инпута и кнопки
+  inputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
   searchInput: {
     backgroundColor: '#2a2a2a',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
+    paddingRight: 40, // оставляем место справа под крестик
     color: '#fff',
     fontSize: 14,
     borderWidth: 1,
     borderColor: '#3f3f3f',
+  },
+  // Стили для кнопки сброса
+  clearButton: {
+    position: 'absolute',
+    right: 10,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#6a6a6a',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   rowHeader: {
     flexDirection: 'row',

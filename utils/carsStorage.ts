@@ -116,8 +116,13 @@ export async function pickAndSaveCars(): Promise<Car[] | null> {
     const cars = parseWorkbook(base64)
 
     // 2. Потом копируем в documentDirectory для сохранения между запусками
-    if (STORAGE_FILE.exists) STORAGE_FILE.delete()
+     if (STORAGE_FILE.exists) STORAGE_FILE.delete()
     pickedFile.copy(STORAGE_FILE)
+
+    // 3. Принудительно обновляем дату модификации файла
+    // (при копировании сохраняется старая дата исходного файла)
+    const base64ToOverwrite = await STORAGE_FILE.base64()
+    STORAGE_FILE.write(base64ToOverwrite, { encoding: 'base64' })
 
     return cars
   } catch (e) {
