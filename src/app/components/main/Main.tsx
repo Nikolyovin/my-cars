@@ -19,11 +19,17 @@ export default function Main() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
   const [searchQuery, setSearchQuery] = useState('')
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inputRef = useRef<TextInput>(null)
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
+  }, [])
+
+  // Убираем фокус при старте, чтобы клавиатура не отображалась
+  useEffect(() => {
+    inputRef.current?.blur()
   }, [])
 
   // При смене машины сбрасываем поиск
