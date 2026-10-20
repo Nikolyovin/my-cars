@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   rowHeader: {
     flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#4a4a4a',
     marginBottom: 4,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 10,
     alignItems: 'center',
   },
   rowEven: {
@@ -254,8 +254,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 13,
   },
-  colYear: { width: 60 },
-  colMileage: { width: 110 },
+  colYear: { width: 45 },
+  colMileage: { width: 85 },
   colPart: { flex: 1 },
   partCell: {
     flex: 1,

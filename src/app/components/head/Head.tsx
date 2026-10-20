@@ -99,7 +99,9 @@ export default function Head() {
 
         {lastUpdated && (
           <Text style={styles.updatedText}>
-            {new Date(lastUpdated).toLocaleDateString('ru-RU')}
+            {lastUpdated > 1000000000000
+              ? new Date(lastUpdated).toLocaleDateString('ru-RU')
+              : 'Только что'}
           </Text>
         )}
       </View>
