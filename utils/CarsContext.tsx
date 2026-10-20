@@ -20,7 +20,7 @@ type CarsContextValue = {
   loadFromFile: () => Promise<void>
   loading: boolean
   lastUpdated: number | null
-  refreshKey: number // ← новое
+  refreshKey: number
 }
 
 const CarsContext = createContext<CarsContextValue | null>(null)
@@ -31,26 +31,36 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  // 1. Добавили состояние для даты
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null)
+
   useEffect(() => {
     ;(async () => {
       const saved = await loadSavedCars()
       if (saved && saved.length) {
         setCars(saved)
         setActiveCarId(saved[0].id)
+        // 2. Берем дату из файла при старте
+        setLastUpdated(getStorageModifiedTime())
       }
       setLoading(false)
     })()
   }, [])
 
+  // 3. Заменили функцию loadFromFile
   const loadFromFile = async () => {
     setLoading(true)
-    const data = await pickAndSaveCars()
-    if (data && data.length) {
-      setCars(data)
-      setActiveCarId(data[0].id)
-      setRefreshKey((k) => k + 1)
+    try {
+      const data = await pickAndSaveCars()
+      if (data && data.length) {
+        setCars(data)
+        setActiveCarId(data[0].id)
+        setRefreshKey((k) => k + 1)
+        setLastUpdated(Date.now()) // Обновляем дату вручную
+      }
+    } finally {
+      setLoading(false) // Выключаем загрузку при любом исходе
     }
-    setLoading(false)
   }
 
   const activeCar = useMemo(
@@ -58,10 +68,7 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
     [cars, activeCarId],
   )
 
-  const lastUpdated = useMemo(
-    () => getStorageModifiedTime(),
-    [refreshKey, cars.length],
-  )
+  // 4. Удалили старый useMemo для lastUpdated
 
   const value = useMemo(
     () => ({
@@ -72,7 +79,7 @@ export function CarsProvider({ children }: { children: React.ReactNode }) {
       loadFromFile,
       loading,
       lastUpdated,
-      refreshKey, // ← новое
+      refreshKey,
     }),
     [cars, activeCarId, activeCar, loading, lastUpdated, refreshKey],
   )
