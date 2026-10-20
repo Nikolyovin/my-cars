@@ -20,16 +20,12 @@ export default function Main() {
   const [searchQuery, setSearchQuery] = useState('')
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const inputRef = useRef<TextInput>(null)
+  const [keyboardEnabled, setKeyboardEnabled] = useState(false)
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
-  }, [])
-
-  // Убираем фокус при старте, чтобы клавиатура не отображалась
-  useEffect(() => {
-    inputRef.current?.blur()
   }, [])
 
   // При смене машины сбрасываем поиск
@@ -92,12 +88,16 @@ export default function Main() {
       <View style={styles.searchContainer}>
         <View style={styles.inputWrapper}>
           <TextInput
+            ref={inputRef}
             style={styles.searchInput}
             placeholder='Поиск по запчастям...'
             placeholderTextColor='#6a6a6a'
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCorrect={false}
+            showSoftInputOnFocus={keyboardEnabled} // Управляем показом клавиатуры
+            onPressIn={() => setKeyboardEnabled(true)} // Включаем при касании
+            onBlur={() => setKeyboardEnabled(false)} // Выключаем при потере фокуса
             // clearButtonMode='while-editing' // работает на iOS
           />
           {/* Кнопка сброса для Android */}
@@ -148,7 +148,13 @@ export default function Main() {
           return (
             <View style={[styles.row, index % 2 === 0 && styles.rowEven]}>
               <Text style={[styles.cell, styles.colYear]}>{item.year}</Text>
-              <Text style={[styles.cell, styles.colMileage]}>
+              <Text
+                style={[
+                  styles.cell,
+                  styles.colMileage,
+                  getMileageNum(item.mileage) === -1 && styles.textCenter,
+                ]}
+              >
                 {formatMileage(item.mileage)}
               </Text>
               <Pressable
@@ -294,5 +300,8 @@ const styles = StyleSheet.create({
   },
   copiedText: {
     color: '#22c55e',
+  },
+  textCenter: {
+    textAlign: 'center',
   },
 })
